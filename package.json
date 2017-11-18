@@ -1,0 +1,12 @@
+{
+  "name": "OnOnlineClipBot",
+  "version": "0.0.1",
+  "dependencies": {
+    "async-request": "^1.2.0",
+    "datejs": "^1.0.0-rc3",
+    "discord.js": "^11.2.1"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}
