@@ -123,13 +123,19 @@ function CheckOnlineStatus(client) {
         console.log(`[TWITCH] Stream came online! Preparing message...`);
         
         const clip = await GetPopularClipLastMonth();
-        const messageFormat = `${TWITCH_CHANNEL_NAME} ist live! Jetzt auf einschalten oder sowas hier verpassen: ${clip.url}`;
+        if (typeof clip != "undefined")
+        {
+            const messageFormat = `${TWITCH_CHANNEL_NAME} ist live! Jetzt auf einschalten oder sowas hier verpassen: ${clip.url}`;
+            console.log(`[TWITCH] Sending regular message:`);
+            console.log(`[TWITCH] ${messageFormat}`);
+            client.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(messageFormat);
+        }
+        else
+        {
+            console.log(`[TWITCH] Stream is online, but there is no clip in the last month... Skipping the regular text!`);
+        }
+
         const embedFormat = await PrintLiveEmbed(data);
-
-        console.log(`[TWITCH] Sending regular message:`);
-        console.log(`[TWITCH] ${messageFormat}`);
-        client.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(messageFormat);
-
         console.log(`Sending embed message:`);
         console.log(`[TWITCH] ${JSON.stringify(embedFormat)}`);
         client.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(embedFormat);
