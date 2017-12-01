@@ -98,7 +98,6 @@ async function PrintLiveEmbed(streamData)
     }
 
     let embed = new Discord.RichEmbed()
-        .setTitle(streamData.title)
         .setAuthor("WIR SIND LIVE", userData.logo, `https://twitch.tv/${TWITCH_CHANNEL_NAME}`)
         .setColor(0x6441A5)
         .setImage(streamData.thumbnail_url.replace("{width}", 1280).replace("{height}", 720))
@@ -108,7 +107,12 @@ async function PrintLiveEmbed(streamData)
 
     if (matches.length != 0)
     {
+        embed.setTitle(streamData.title.replace(/(\ \| ([^\|]*))$/g, ""));
         embed.addField(`Am Start ${matches.length==1?'ist':'sind'}...`, matches.join(" & ") + "!", true);
+    }
+    else
+    {
+        embed.setTitle(streamData.title);
     }
 
     return embed;
