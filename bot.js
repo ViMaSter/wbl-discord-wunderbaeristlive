@@ -119,7 +119,7 @@ async function PrintLiveEmbed(streamData)
 }
 
 function CheckOnlineStatus(client) {
-    let currentState = false;
+    let currentState = undefined;
     let streamInfo = undefined;
 
     async function OnOnline(data)
@@ -162,6 +162,7 @@ function CheckOnlineStatus(client) {
         if (typeof currentState == "undefined")
         {
             currentState = newState;
+            console.log(`[TWITCH] Not executing logic for initial state setup; initial state: "${currentState?"online":"offline"}"!`);
             return;
         }
 
@@ -211,7 +212,9 @@ client.on('ready', async () => {
 	console.log(`[TWITCH] Resolved ${process.env.TWITCH_CHANNEL_ID} to /${TWITCH_CHANNEL_NAME}!`);
 	console.log(`[TWITCH] Waiting for twitch channel ${TWITCH_CHANNEL_NAME} to come online!`);
 
-	setInterval(CheckOnlineStatus(client), 5000);
+    let statusChecker = CheckOnlineStatus(client);
+    statusChecker();
+    setInterval(statusChecker, 5000);
 });
 
 client.login(process.env.DISCORD_USER_TOKEN);
