@@ -122,6 +122,11 @@ function CheckOnlineStatus(client) {
     let currentState = undefined;
     let streamInfo = undefined;
 
+    const requiredValidationSteps = parseInt(process.env.VALIDATION_STEPS_REQUIRED, 10) || 1;
+    let currentValidationSteps = 0;
+
+    let upcomingState = null;
+
     async function OnOnline(data)
     {
         console.log(`[TWITCH] Stream came online! Preparing message...`);
@@ -152,8 +157,39 @@ function CheckOnlineStatus(client) {
         console.log(`Stream went offline!`);
     }
 
-    function SetCurrentState(newState, data)
+    function CollectState(state)
     {
+        if (upcomingState != state)
+        {
+            upcomingState = state;
+            currentValidationSteps = 1;
+        }
+    
+        console.log(`[INTERN] Collecting state ${state ? "online" : "offline"}: Stage ${currentValidationSteps} / ${requiredValidationSteps}`);
+
+        if (currentValidationSteps < requiredValidationSteps)
+        {
+            currentValidationSteps++;
+            return false;
+        }
+        if (currentValidationSteps == requiredValidationSteps)
+        {
+            return true;
+        }
+        if (currentValidationSteps > requiredValidationSteps)
+        {
+            return false;
+        }
+
+        return false;
+    }
+
+    function UpdateState(newState, data) {
+        if (!CollectState(newState))
+        {
+            return;
+        }
+
         if (currentState == newState)
         {
             return;
@@ -195,7 +231,7 @@ function CheckOnlineStatus(client) {
 
         const parsedResponse = JSON.parse(response.body);
         const streamIsOnline = parsedResponse.data.length > 0;
-        SetCurrentState(streamIsOnline, streamIsOnline ? parsedResponse.data[0] : {});
+        UpdateState(streamIsOnline, streamIsOnline ? parsedResponse.data[0] : {});
         return;
     }
 
