@@ -134,7 +134,7 @@ function CheckOnlineStatus(client) {
         const clip = await GetPopularClipLastMonth();
         if (typeof clip != "undefined")
         {
-            const messageFormat = `Hey @everyone! ${TWITCH_CHANNEL_NAME} ist live! Jetzt auf einschalten oder sowas hier verpassen: ${clip.url}`;
+            const messageFormat = `Hey @everyone! ${TWITCH_CHANNEL_NAME} ist live! Jetzt einschalten oder sowas hier verpassen: ${clip.url}`;
             console.log(`[TWITCH] Sending regular message:`);
             console.log(`[TWITCH] ${messageFormat}`);
             client.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(messageFormat);
