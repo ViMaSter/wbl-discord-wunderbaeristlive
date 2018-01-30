@@ -216,7 +216,7 @@ function CheckOnlineStatus(client) {
             currentValidationSteps = 1;
         }
 
-        console.log(`[INTERNAL] Collecting state ${state ? "online" : "offline"}: Stage ${currentValidationSteps} / ${requiredValidationSteps}`);
+        console.log(`[INTERNAL] Collecting state ${state}: Stage ${currentValidationSteps} / ${requiredValidationSteps}`);
 
         if (currentValidationSteps < requiredValidationSteps)
         {
