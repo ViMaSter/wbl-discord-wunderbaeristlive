@@ -343,10 +343,14 @@ function tablefy(content)
         "DISCORD_USER_TOKEN": false,
         "VALIDATION_STEPS_REQUIRED": true,
         "PEOPLE": true,
-        "EMBED_TITLE": true,
-        "EMBED_GAME_PREFIX": true,
-        "EMBED_PEOPLE_PREFIX": true,
-        "EMBED_POST": true
+        "ISLIVE_MESSAGE": true,
+        "ISLIVE_EMBED_TITLE": true,
+        "ISLIVE_EMBED_GAME_PREFIX": true,
+        "ISLIVE_EMBED_PEOPLE_PREFIX": true,
+        "ISRERUN_MESSAGE": true,
+        "ISRERUN_EMBED_TITLE": true,
+        "ISRERUN_EMBED_GAME_PREFIX": true,
+        "ISRERUN_EMBED_PEOPLE_PREFIX": true,
     };
 
     let output = "";
