@@ -4,7 +4,8 @@
   "dependencies": {
     "async-request": "^1.2.0",
     "datejs": "^1.0.0-rc3",
-    "discord.js": "^11.2.1"
+    "discord.js": "^11.2.1",
+    "expandJS": "ViMaSter/expandJS"
   },
   "engines": {
     "node": ">=8.0.0"
