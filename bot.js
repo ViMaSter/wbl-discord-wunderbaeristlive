@@ -246,6 +246,13 @@ function CheckOnlineStatus(client) {
             return;
         }
 
+        if (typeof currentState == "undefined")
+        {
+            currentState = newState;
+            console.log(`[TWITCH] Not executing logic for initial state setup; initial state: "${currentState}"!`);
+            return;
+        }
+
         currentState = newState;
         OnStateChange(newState, data);
     }
