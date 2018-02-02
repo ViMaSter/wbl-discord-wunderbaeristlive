@@ -35,5 +35,6 @@ ISRERUN_EMBED_PEOPLE_PREFIX= // [string]  Text above list of hosts in embed mess
 ISRERUN_EMBED_GAME_PREFIX=   // [string]  Text above game-title in embed message
 ```
 The values to be added after the `=` are either integers; i.e. `VALIDATION_STEPS_REQUIRED=5`; or strings escaped using `"` if spaces are used `ISLIVE_MESSAGE="Hey everyone! We're live!"`.
+
 9. **(local)** Run `heroku local` inside the repository  
    **(remote)** Restart all dynos
