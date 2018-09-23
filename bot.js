@@ -23,17 +23,17 @@ function GetStateSpecificEnvironmentVariable(state, variableName)
 
 async function GetPopularClipLastMonth()
 {
-    var options = {
+    const options = {
         headers: {
-            'Client-ID': process.env.TWITCH_CLIENT_ID,
-            'Accept': 'application/vnd.twitchtv.v5+json'
+            'Accept': 'application/vnd.twitchtv.v5+json',
+            'Client-ID': process.env.TWITCH_CLIENT_ID
         }
     };
 
     const response = await Request(`https:\/\/api.twitch.tv/kraken/clips/top?channel=${TWITCH_CHANNEL_NAME}&period=month&limit=1`, options);
     if (response.statusCode !== 200)
     {
-        console.error(`[TWITCH] Error accessing helix status API for last clip timestamp (status code ${response.statusCode})!`);
+        console.error(`[TWITCH] Error accessing kraken status API for last clip timestamp (status code ${response.statusCode})!`);
         console.error(`[TWITCH] ${JSON.stringify(response.body)}`);
         return;
     }
@@ -43,67 +43,55 @@ async function GetPopularClipLastMonth()
     return parsedResponse.clips[0];
 }
 
-async function GetUserData(userID)
+async function GetUserData(userIDOrStreamData)
 {
-    var options = {
-        headers: {
-            'Client-ID': process.env.TWITCH_CLIENT_ID,
-            'Accept': 'application/vnd.twitchtv.v5+json'
-        }
-    };
-
-    const response = await Request(`https:\/\/api.twitch.tv/kraken/users/${userID}`, options);
-    if (response.statusCode !== 200)
+    if (typeof userIDOrStreamData == "string" || typeof userIDOrStreamData == "number")
     {
-        console.error(`[TWITCH] Error accessing helix status API for user data (status code ${response.statusCode})!`);
-        console.error(`[TWITCH] ${JSON.stringify(response.body)}`);
-        return;
+        const options = {
+            headers: {
+                'Accept': 'application/vnd.twitchtv.v5+json',
+                'Client-ID': process.env.TWITCH_CLIENT_ID
+            }
+        };
+
+        const response = await Request(`https:\/\/api.twitch.tv/kraken/users/${userIDOrStreamData}`, options);
+        if (response.statusCode !== 200)
+        {
+            console.error(`[TWITCH] Error accessing kraken status API for user data (status code ${response.statusCode})!`);
+            console.error(`[TWITCH] ${JSON.stringify(response.body)}`);
+            return;
+        }
+
+        const parsedResponse = JSON.parse(response.body);
+
+        return parsedResponse;
     }
 
-    const parsedResponse = JSON.parse(response.body);
-
-    return parsedResponse;
+    if (typeof userIDOrStreamData == "object")
+    {
+        return userIDOrStreamData.channel;
+    }
 }
 
-async function GetGameData(gameID)
+async function GetGameData(streamData)
 {
-    var options = {
-        headers: {
-            'Client-ID': process.env.TWITCH_CLIENT_ID,
-            'Accept': 'application/vnd.twitchtv.v5+json'
-        }
-    };
-
-    const response = await Request(`https:\/\/api.twitch.tv/helix/games?id=${gameID}`, options);
-    if (response.statusCode !== 200)
-    {
-        console.error(`[TWITCH] Error accessing helix status API for game data (status code ${response.statusCode})!`);
-        console.error(`[TWITCH] ${JSON.stringify(response.body)}`);
-        return;
-    }
-
-    const parsedResponse = JSON.parse(response.body);
-
-    return parsedResponse.data[0];
+    return { "name": streamData.game };
 }
 
 async function PrintLiveEmbed(state, streamData)
 {
-    const userData = await GetUserData(streamData.user_id);
-    const gameData = await GetGameData(streamData.game_id);
+    const userData = await GetUserData(streamData);
+    const gameData = await GetGameData(streamData);
 
     if (!userData)
     {
-        console.warn(`We're unable to find user ${streamData.user_id}; not printing any embed message!`);
+        console.warn(`[TWITCH] We're unable to find user ${streamData.user_id}; not printing any embed message!`);
+        return;
     }
 
     if (!gameData)
     {
-        console.warn(`We're unable to find game ${streamData.game_id}; not printing any embed message!`);
-    }
-
-    if (!userData || !gameData)
-    {
+        console.warn(`[TWITCH] We're unable to find game ${streamData.game_id}; not printing any embed message!`);
         return;
     }
 
@@ -114,7 +102,7 @@ async function PrintLiveEmbed(state, streamData)
     const regex = new RegExp('(?:\| | und )('+people.join('|')+')', 'g');
     let m;
 
-    while ((m = regex.exec(streamData.title)) !== null) {
+    while ((m = regex.exec(streamData.channel.status)) !== null) {
         if (m.index === regex.lastIndex) {
             regex.lastIndex++;
         }
@@ -128,21 +116,21 @@ async function PrintLiveEmbed(state, streamData)
     }
 
     let embed = new Discord.RichEmbed()
-    .setAuthor(GetStateSpecificEnvironmentVariable(state, "EMBED_TITLE"), userData.logo, `https://twitch.tv/${TWITCH_CHANNEL_NAME}`)
+    .setAuthor(GetStateSpecificEnvironmentVariable(state, "EMBED_TITLE"), "", `https://twitch.tv/${TWITCH_CHANNEL_NAME}`)
     .setColor(0x6441A5)
-    .setImage(streamData.thumbnail_url.replace("{width}", 1280).replace("{height}", 720))
-    .setThumbnail(gameData.box_art_url.replace("{width}", 136).replace("{height}", 190))
+    .setImage(streamData.preview.template.replace("{width}", 1280).replace("{height}", 720))
+    .setThumbnail(userData.logo)
     .setURL(`https://twitch.tv/${TWITCH_CHANNEL_NAME}`)
     .addField(GetStateSpecificEnvironmentVariable(state, "EMBED_GAME_PREFIX"), gameData.name, true)
 
     if (matches.length != 0)
     {
-        embed.setTitle(streamData.title.replace(/(\ \| ([^\|]*))$/g, ""));
+        embed.setTitle(streamData.channel.status.replace(/(\ \| ([^\|]*))$/g, ""));
         embed.addField(GetStateSpecificEnvironmentVariable(state, "EMBED_PEOPLE_PREFIX"), matches.join(" & ") + "!", true);
     }
     else
     {
-        embed.setTitle(streamData.title);
+        embed.setTitle(streamData.channel.status);
     }
 
     return embed;
@@ -176,7 +164,7 @@ async function SendMessages(state, data)
         const embedFormat = await PrintLiveEmbed(state, data);
         if (embedFormat)
         {
-            console.log(`Sending embed message:`);
+            console.log(`[DISCORD] Sending embed message:`);
             console.log(`[DISCORD] ${JSON.stringify(embedFormat)}`);
             client.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(embedFormat);
         }
@@ -245,12 +233,15 @@ function CheckOnlineStatus(client) {
         {
             return;
         }
-
+        
         if (typeof currentState == "undefined")
         {
-            currentState = newState;
-            console.log(`[TWITCH] Not executing logic for initial state setup; initial state: "${currentState}"!`);
-            return;
+            if (typeof process.env["ALLOW_INITIAL_STATE_POST"] == "undefined")
+            {
+                currentState = newState;
+                console.log(`[TWITCH] Not executing logic for initial state setup; initial state: "${currentState}"!`);
+                return;
+            }   
         }
 
         currentState = newState;
@@ -260,7 +251,7 @@ function CheckOnlineStatus(client) {
     const stateCallbacks = {
         "OFFLINE": async function (data)
         {
-            console.log(`Stream went offline!`);
+            console.log(`[TWITCH] Stream went offline!`);
         },
         "RERUN": async function (data)
         {
@@ -287,16 +278,17 @@ function CheckOnlineStatus(client) {
 
     async function OnUpdate()
     {
-        var options = {
+        const options = {
             headers: {
+                'Accept': 'application/vnd.twitchtv.v5+json',
                 'Client-ID': process.env.TWITCH_CLIENT_ID
             }
         };
 
-        const response = await Request(`https:\/\/api.twitch.tv/helix/streams?user_id=${process.env.TWITCH_CHANNEL_ID}`, options);
+        const response = await Request(`https:\/\/api.twitch.tv/kraken/streams/${process.env.TWITCH_CHANNEL_ID}?stream_type=all`, options);
         if (response.statusCode !== 200)
         {
-            console.error(`[TWITCH] Error accessing helix status API (status code ${response.statusCode})!`);
+            console.error(`[TWITCH] Error accessing kraken status API (status code ${response.statusCode})!`);
             console.error(JSON.stringify(response.body));
             return;
         }
@@ -308,12 +300,12 @@ function CheckOnlineStatus(client) {
             title: "NO TITLE",
             thumbnail_url: ""
         };
-        let streamState = LiveTypes.OFFLINE;
+        let streamState = "OFFLINE";
 
-        if (parsedResponse.data.length > 0)
+        if (parsedResponse.stream)
         {
-            data = parsedResponse.data[0];
-            streamState = data.type.toUpperCase();
+            data = parsedResponse.stream;
+            streamState = parsedResponse.stream.stream_type.toUpperCase();
         }
 
         UpdateState(streamState, data);
