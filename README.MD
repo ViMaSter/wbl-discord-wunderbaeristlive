@@ -21,7 +21,7 @@ DISCORD_CHANNEL_ID=          // [integer] Channel ID of the discord room to post
 DISCORD_USER_TOKEN=          // [string]  User token of your discord app
 TWITCH_CHANNEL_ID=           // [integer] Channel ID of the twitch channel to monitor
 TWITCH_CLIENT_ID=            // [string]  Client ID of your twitch app
-VALIDATION_STEPS_REQUIRED=   // [integer] How often the twitch state is checked until the notification is actially posted
+VALIDATION_STEPS_REQUIRED=   // [integer] How often the twitch state is checked until the notification is actially posted (1 - 1000)
 PEOPLE=                      // [string]  Array of names of hosts split by ","
 --- When live ---
 ISLIVE_MESSAGE=              // [string]  Text for single message sent before embed message  (leave blank to just send the embed message)
@@ -33,7 +33,7 @@ ISRERUN_MESSAGE=             // [string]  Text for single message sent before em
 ISRERUN_EMBED_TITLE=         // [string]  Headline of embed message (leave blank to not send the embed message)
 ISRERUN_EMBED_PEOPLE_PREFIX= // [string]  Text above list of hosts in embed message
 ISRERUN_EMBED_GAME_PREFIX=   // [string]  Text above game-title in embed message
-ALLOW_INITIAL_STATE_POST=    // [EXISTS]  Message is sent if the stream is live, when the bot restarts
+ALLOW_INITIAL_STATE_POST=    // [integer] If set to 1, a status message is sent if the stream is live, when the bot restarts
 ```
 The values to be added after the `=` are either integers; i.e. `VALIDATION_STEPS_REQUIRED=5`; or strings `ISLIVE_MESSAGE=Hey everyone! We're live!`.
 
