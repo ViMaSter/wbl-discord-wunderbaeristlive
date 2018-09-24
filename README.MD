@@ -33,8 +33,9 @@ ISRERUN_MESSAGE=             // [string]  Text for single message sent before em
 ISRERUN_EMBED_TITLE=         // [string]  Headline of embed message (leave blank to not send the embed message)
 ISRERUN_EMBED_PEOPLE_PREFIX= // [string]  Text above list of hosts in embed message
 ISRERUN_EMBED_GAME_PREFIX=   // [string]  Text above game-title in embed message
+ALLOW_INITIAL_STATE_POST=    // [EXISTS]  Message is sent if the stream is live, when the bot restarts
 ```
-The values to be added after the `=` are either integers; i.e. `VALIDATION_STEPS_REQUIRED=5`; or strings escaped using `"` if spaces are used `ISLIVE_MESSAGE="Hey everyone! We're live!"`.
+The values to be added after the `=` are either integers; i.e. `VALIDATION_STEPS_REQUIRED=5`; or strings `ISLIVE_MESSAGE=Hey everyone! We're live!`.
 
 9. **(local)** Run `heroku local` inside the repository  
    **(remote)** Restart all dynos
