@@ -39,3 +39,7 @@ The values to be added after the `=` are either integers; i.e. `VALIDATION_STEPS
 
 9. **(local)** Run `heroku local` inside the repository  
    **(remote)** Restart all dynos
+
+## Formatting messages
+
+You can use `{twitchChannelName}` and `{clipURL}` in the `ISLIVE_MESSAGE`- and `ISRERUN_MESSAGE`-environment variable, which are replaced with either the username of the twitch-channel (resolved from TWITCH_CLIENT_ID) or a URL to the top clip in the last 3 months respectively.
