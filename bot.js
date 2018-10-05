@@ -37,7 +37,7 @@ class TwitchNotifier {
 
             let statusChecker = new StatusMonitor(validationSteps, initialStatusUpdate, this.SendMessages.bind(this), this.GetTwitchState.bind(this));
             statusChecker.Update();
-            setInterval(statusChecker.Update, 5000);
+            setInterval(()=>{statusChecker.Update();}, 5000);
         });
     }
 
@@ -152,22 +152,26 @@ class TwitchNotifier {
 
         // filter people streaming
         let matches = [];
-        let people = process.env.PEOPLE.split(',');
-        console.log(`[INTERNAL] Trying to find '${people.join(',')}' in the stream title...`)
-        const regex = new RegExp('(?:\| | und )('+people.join('|')+')', 'g');
-        let m;
+        if (process.env.PEOPLE && process.env.PEOPLE.trim().length)
+        {
+            let people = process.env.PEOPLE.trim().length ? process.env.PEOPLE.split(',') : [];
+            console.log(people);
+            console.log(`[INTERNAL] Trying to find '${people.join(',')}' in the stream title...`)
+            const regex = new RegExp('(?:\| | und )('+people.join('|')+')', 'g');
+            let m;
 
-        while ((m = regex.exec(streamData.channel.status)) !== null) {
-            if (m.index === regex.lastIndex) {
-                regex.lastIndex++;
-            }
-
-            m.forEach((match, groupIndex) => {
-                if (groupIndex == 1)
-                {
-                    matches.push(match);
+            while ((m = regex.exec(streamData.channel.status)) !== null) {
+                if (m.index === regex.lastIndex) {
+                    regex.lastIndex++;
                 }
-            });
+
+                m.forEach((match, groupIndex) => {
+                    if (groupIndex == 1)
+                    {
+                        matches.push(match);
+                    }
+                });
+            }
         }
 
         let embed = new Discord.RichEmbed()
