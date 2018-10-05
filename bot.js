@@ -90,29 +90,33 @@ async function PrintLiveEmbed(state, streamData)
     }
 
     if (!gameData)
-    {
+    {   
         console.warn(`[TWITCH] We're unable to find game ${streamData.game_id}; not printing any embed message!`);
         return;
     }
 
     // filter people streaming
     let matches = [];
-    let people = process.env.PEOPLE.split(',');
-    console.log(`[INTERNAL] Trying to find '${people.join(',')}' in the stream title...`)
-    const regex = new RegExp('(?:\| | und )('+people.join('|')+')', 'g');
-    let m;
+    if (process.env.PEOPLE.trim().length)
+    {
+        let people = process.env.PEOPLE.trim().length ? process.env.PEOPLE.split(',') : [];
+        console.log(people);
+        console.log(`[INTERNAL] Trying to find '${people.join(',')}' in the stream title...`)
+        const regex = new RegExp('(?:\| | und )('+people.join('|')+')', 'g');
+        let m;
 
-    while ((m = regex.exec(streamData.channel.status)) !== null) {
-        if (m.index === regex.lastIndex) {
-            regex.lastIndex++;
-        }
-
-        m.forEach((match, groupIndex) => {
-            if (groupIndex == 1)
-            {
-                matches.push(match);
+        while ((m = regex.exec(streamData.channel.status)) !== null) {
+            if (m.index === regex.lastIndex) {
+                regex.lastIndex++;
             }
-        });
+
+            m.forEach((match, groupIndex) => {
+                if (groupIndex == 1)
+                {
+                    matches.push(match);
+                }
+            });
+        }
     }
 
     let embed = new Discord.RichEmbed()
@@ -367,6 +371,11 @@ function tablefy(content)
     return output;
 }
 
+function generatePageStyle()
+{
+    return "<style>*{text-align:left;font:monospace;}</style>";
+}
+
 require('http').createServer((request, response) => {
     const { headers, method, url } = request;
     let body = [];
@@ -387,6 +396,7 @@ require('http').createServer((request, response) => {
         response.statusCode = 200;
         response.setHeader('Content-Type', 'text/html');
 
+        response.write(generatePageStyle());
         response.write(tablefy(process.env));
         response.end();
     });
