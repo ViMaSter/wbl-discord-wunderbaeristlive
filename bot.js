@@ -4,15 +4,27 @@ String.prototype.format = expand.stringFormat;
 
 // Main discord functionality
 const Discord = require('discord.js');
-181
 
 // HTTP request helper
 const Date = require('datejs');
 const Request = require('async-request');
 
-function GetStateSpecificEnvironmentVariable(state, variableName)
+function GetStateSpecificEnvironmentVariable(state, platform, variableName)
 {
-    return process.env[`IS${state}_${variableName}`].replace("\\n", "\n") || "";
+    let message = "";
+    if (process.env[`IS${state}_${platform}_${variableName}`])
+    {
+        message = process.env[`IS${state}_${platform}_${variableName}`]
+    }
+    else if (process.env[`IS${state}_${variableName}`])
+    {
+        message = process.env[`IS${state}_${variableName}`]
+    }
+    else
+    {
+        message = "";
+    }
+    return message.replace("\\n", "\n");
 }
 
 class TwitchNotifier {
@@ -171,16 +183,16 @@ class TwitchNotifier {
         }
 
         let embed = new Discord.RichEmbed()
-        .setAuthor(GetStateSpecificEnvironmentVariable(state, "EMBED_TITLE"), "", `https://twitch.tv/${this.channelName}`)
+        .setAuthor(GetStateSpecificEnvironmentVariable(state, "TWITCH", "EMBED_TITLE"), "", `https://twitch.tv/${this.channelName}`)
         .setColor(0x6441A5)
         .setThumbnail(userData.logo)
         .setURL(`https://twitch.tv/${this.channelName}`)
-        .addField(GetStateSpecificEnvironmentVariable(state, "EMBED_GAME_PREFIX"), gameData.name, true)
+        .addField(GetStateSpecificEnvironmentVariable(state, "TWITCH", "EMBED_GAME_PREFIX"), gameData.name, true)
 
         if (matches.length != 0)
         {
             embed.setTitle(streamData.channel.status.replace(/(\ \| ([^\|]*))$/g, ""));
-            embed.addField(GetStateSpecificEnvironmentVariable(state, "EMBED_PEOPLE_PREFIX"), matches.join(" & ") + "!", true);
+            embed.addField(GetStateSpecificEnvironmentVariable(state, "TWITCH", "EMBED_PEOPLE_PREFIX"), matches.join(" & ") + "!", true);
         }
         else
         {
@@ -192,13 +204,13 @@ class TwitchNotifier {
 
     async SendMessages(state, data)
     {
-        const messageFormat = GetStateSpecificEnvironmentVariable(state, "MESSAGE");
+        const messageFormat = GetStateSpecificEnvironmentVariable(state, "TWITCH", "MESSAGE");
         if (messageFormat.length > 0)
         {
             const clip = await this.GetPopularClipLastMonth();
             if (typeof clip != "undefined")
             {
-                const message = messageFormat.format({clipURL: clip.url, twitchChannelName: this.channelName})
+                const message = messageFormat.format({clipURL: clip.url, channelName: this.channelName})
                 console.log(`[DISCORD] Sending regular message:`);
                 console.log(`[DISCORD] ${message}`);
                 this.discordClient.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(message);
@@ -213,7 +225,7 @@ class TwitchNotifier {
             console.log(`[DISCORD] Not sending a message, as there's no MESSAGE for '${state}' set`);
         }
 
-        if (GetStateSpecificEnvironmentVariable(state, "EMBED_TITLE"))
+        if (GetStateSpecificEnvironmentVariable(state, "TWITCH", "EMBED_TITLE"))
         {
             const embedFormat = await this.PrintLiveEmbed(state, data);
             if (embedFormat)
@@ -263,17 +275,16 @@ class YouTubeNotifier {
         const response = await Request(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${this.channelID}&eventType=live&type=video&key=${process.env.YOUTUBE_API_KEY}`);
         if (response.statusCode !== 200)
         {
-            console.error(`[YOUTUBE] Error accessing YouTube V3 API for live events (status code ${response.statusCode})!`);
+            console.group(`[YOUTUBE] Error accessing YouTube V3 API for live events (status code ${response.statusCode})!`);
             console.error(JSON.stringify(response.body));
+            console.groupEnd();
             return;
         }
 
         const parsedResponse = JSON.parse(response.body);
         if (parsedResponse.items.length <= 0)
         {
-            console.group("[YOUTUBE] API returned no current live-events.");
-            console.log(parsedResponse);
-            console.groupEnd();
+            newStateCallback("OFFLINE", {});
             return;
         }
 
@@ -303,7 +314,7 @@ class YouTubeNotifier {
         // YouTube has no concept of reruns; altough premieres might be supported at a later point in time
         const streamState = "LIVE";
 
-        newStateCallback(streamState, data);
+        newStateCallback("LIVE", data);
     }
 
     async GetYouTubeChannel(channelID)
@@ -385,7 +396,6 @@ class YouTubeNotifier {
         // yhdmmmdh-   .`  .  .NN/-/sssoo+oo++oyysoosshdmmmmm
         // mmmmmmm-     -  `. hy//..dho/shyyyyyhhhhddddmmmmmm
 
-
         // filter people streaming
         let matches = [];
         let people = process.env.PEOPLE.split(',');
@@ -407,7 +417,7 @@ class YouTubeNotifier {
         }
 
         let embed = new Discord.RichEmbed()
-        .setAuthor(GetStateSpecificEnvironmentVariable(state, "EMBED_TITLE"), "", `https://youtube.com/c/${this.channelID}`)
+        .setAuthor(GetStateSpecificEnvironmentVariable(state, "TWITCH", "EMBED_TITLE"), "", `https://youtube.com/c/${this.channelID}`)
         .setColor(0xFF0000)
         .setThumbnail(this.channelInfo.thumbnail)
         .setURL(`https://youtube.com/watch?v=${streamData.id}`)
@@ -420,7 +430,7 @@ class YouTubeNotifier {
         if (matches.length != 0)
         {
             embed.setTitle(streamData.title.replace(/( )?(\| ([^\|]*))$/g, ""));
-            embed.addField(GetStateSpecificEnvironmentVariable(state, "EMBED_PEOPLE_PREFIX"), matches.join(" & ") + "!", true);
+            embed.addField(GetStateSpecificEnvironmentVariable(state, "TWITCH", "EMBED_PEOPLE_PREFIX"), matches.join(" & ") + "!", true);
         }
         else
         {
@@ -432,32 +442,20 @@ class YouTubeNotifier {
 
     async SendMessages(state, data)
     {
-        // REPLACE WITH GIF-COLLECTION
-
-        /*
-        const messageFormat = GetStateSpecificEnvironmentVariable(state, "MESSAGE");
+        const messageFormat = GetStateSpecificEnvironmentVariable(state, "YOUTUBE", "MESSAGE");
         if (messageFormat.length > 0)
         {
-            const clip = await this.GetPopularClipLastMonth();
-            if (typeof clip != "undefined")
-            {
-                const message = messageFormat.format({clipURL: clip.url, twitchChannelName: this.channelName})
-                console.log(`[DISCORD] Sending regular message:`);
-                console.log(`[DISCORD] ${message}`);
-                this.discordClient.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(message);
-            }
-            else
-            {
-                console.log(`[DISCORD] Requested to send a message about ${state}, but there is no clip in the last month... Skipping the regular text!`);
-            }
+            const message = messageFormat.format({channelName: this.channelInfo.name})
+            console.log(`[DISCORD] Sending regular message:`);
+            console.log(`[DISCORD] ${message}`);
+            this.discordClient.channels.find("id", process.env.DISCORD_CHANNEL_ID).send(message);
         }
         else
         {
             console.log(`[DISCORD] Not sending a message, as there's no MESSAGE for '${state}' set`);
         }
-        */
 
-        if (GetStateSpecificEnvironmentVariable(state, "EMBED_TITLE"))
+        if (GetStateSpecificEnvironmentVariable(state, "YOUTUBE", "EMBED_TITLE"))
         {
             const embedFormat = await this.PrintLiveEmbed(state, data);
             if (embedFormat)

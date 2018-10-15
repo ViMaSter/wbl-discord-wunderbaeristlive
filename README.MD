@@ -53,7 +53,14 @@ VALIDATION_STEPS_REQUIRED=   // [integer] Amount of times the live state is poll
 * Keys with `?` in their comment are optional.
   * Leaving out YouTube-/twitch-configuration values will cause the bot to not monitor that service. 
   * Not supplying a `_MESSAGE` or `_EMBED_TITLE` will not sent a plain Discord or embed message respectively. 
-* YouTube has no equivalent of clips, hence `ISLIVE_MESSAGE` is ignored for YouTube-configurations and only an embed-message is sent.
+* The `ISLIVE_MESSAGE`/`ISRERUN_MESSAGE` has two template arguments
+  * `{channelName}` is replaced with the YouTube or Twitch display name
+  * `{clipURL}` is Twitch-exclusive and replaced with the most "popular" clip of the last 30 days.
+* The `IS*`-configurations (`ISLIVE_MESSAGE`, `ISRERUN_EMBED_TITLE`, etc.) can be made platform-specific by adding `YOUTUBE_`/`TWITCH_` after the first `_`; they will always gain priority over a generic definition, even if the generic definition is defined after a specific one  
+This is required, since the `{clipURL}`-template parameter is only available on Twitch and a more suiting message might be requested
+  * i.e. `ISLIVE_MESSAGE` = `ISLIVE_TWITCH_MESSAGE`
+  * i.e. `ISLIVE_EMBED_TITLE` = `ISLIVE_YOUTUBE_EMBED_TITLE`
+  * etc. ...
 
 
 9. **(local)** Run `heroku local` inside the repository  
