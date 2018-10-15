@@ -622,25 +622,48 @@ class WebConfigHelper
             "DISCORD_USER_TOKEN": false,
             "VALIDATION_STEPS_REQUIRED": true,
             "PEOPLE": true,
-            "ISLIVE_MESSAGE": true,
-            "ISLIVE_EMBED_TITLE": true,
-            "ISLIVE_EMBED_GAME_PREFIX": true,
-            "ISLIVE_EMBED_PEOPLE_PREFIX": true,
-            "ISRERUN_MESSAGE": true,
-            "ISRERUN_EMBED_TITLE": true,
-            "ISRERUN_EMBED_GAME_PREFIX": true,
-            "ISRERUN_EMBED_PEOPLE_PREFIX": true,
+            "ISLIVE{platform}_MESSAGE": true,
+            "ISLIVE{platform}_EMBED_TITLE": true,
+            "ISLIVE{platform}_EMBED_GAME_PREFIX": true,
+            "ISLIVE{platform}_EMBED_PEOPLE_PREFIX": true,
+            "ISRERUN{platform}_MESSAGE": true,
+            "ISRERUN{platform}_EMBED_TITLE": true,
+            "ISRERUN{platform}_EMBED_GAME_PREFIX": true,
+            "ISRERUN{platform}_EMBED_PEOPLE_PREFIX": true,
         };
+
+        const platforms = ["_TWITCH", "_YOUTUBE", ""];
+        let finishedKeys = [];
 
         let output = "<style>*{text-align: left;font-family: monospace;}</style>";
         output += "<table>";
-        for (const key in content)
+        for (const key in keyWhitelist)
         {
-            if (typeof keyWhitelist[key] == "undefined")
+            for (const index in platforms)
             {
-                continue;
+                if (parseInt(index) != index)
+                {
+                    continue;
+                }
+
+                if (finishedKeys.indexOf(key) != -1)
+                {
+                    continue;
+                }
+                const platform = platforms[index];
+                console.log();
+                const formattedKey = key.format({"platform": platform});
+                if (content[key.format({"platform": platform})])
+                {
+                    const formattedValue = content[key.format({"platform": platform})];
+                    output += `<tr><th>${formattedKey}</th><td>${keyWhitelist[key] ? formattedValue : "<i>[REDACTED]</i>"}</td></tr>`
+                }
+                if (content[key.format({"platform": platform})] == content[key])
+                {
+                    finishedKeys.push(key.format({"platform": platform}));
+                    continue;
+                }
             }
-            output += `<tr><th>${key}</th><td>${keyWhitelist[key] ? content[key] : "<i>[REDACTED]</i>"}</td></tr>`
         }
         output += "</table>";
 
